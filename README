@@ -1,3 +1,11 @@
+Original project: https://code.google.com/p/logkeys/
+
+Forked-here-because: I wanted to log and analyze key frequency. I added the -f
+option. Enjoy.
+
+==============================================================================         
+
+
 ===============================================================================
  logkeys - a GNU/Linux keylogger that works!
 ===============================================================================
