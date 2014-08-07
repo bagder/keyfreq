@@ -511,13 +511,15 @@ int main(int argc, char **argv)
 
       file_size = 0;  // new log file is now empty
 
-      // write new timestamp
-      time(&cur_time);
-      strftime(timestamp, sizeof(timestamp), TIME_FORMAT, localtime(&cur_time));
-      if (args.flags & FLAG_NO_TIMESTAMPS)
-        file_size += fprintf(out, "Logging started at %s\n\n", timestamp);
-      else
-        file_size += fprintf(out, "Logging started ...\n\n%s", timestamp);
+      if(!args.frequency) {
+        // write new timestamp
+        time(&cur_time);
+        strftime(timestamp, sizeof(timestamp), TIME_FORMAT, localtime(&cur_time));
+        if (args.flags & FLAG_NO_TIMESTAMPS)
+          file_size += fprintf(out, "Logging started at %s\n\n", timestamp);
+        else
+          file_size += fprintf(out, "Logging started ...\n\n%s", timestamp);
+      }
 
       if (!args.http_url.empty() || !args.irc_server.empty()) {
         switch (fork()) {
@@ -634,11 +636,12 @@ int main(int argc, char **argv)
 
   } // while (read(input_fd))
 
-  // append final timestamp, close files and exit
-  time(&cur_time);
-  strftime(timestamp, sizeof(timestamp), "%F %T%z", localtime(&cur_time));
-  fprintf(out, "\n\nLogging stopped at %s\n\n", timestamp);
-
+  if(!args.frequency) {
+    // append final timestamp, close files and exit
+    time(&cur_time);
+    strftime(timestamp, sizeof(timestamp), "%F %T%z", localtime(&cur_time));
+    fprintf(out, "\n\nLogging stopped at %s\n\n", timestamp);
+  }
   fclose(out);
 
   remove(PID_FILE);
