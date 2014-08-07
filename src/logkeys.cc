@@ -2,7 +2,7 @@
   Copyleft (ɔ) 2009 Kernc
   This program is free software. It comes with absolutely no warranty whatsoever.
   See COPYING for further information.
-  
+
   Project homepage: http://code.google.com/p/logkeys/
 */
 
@@ -89,7 +89,7 @@ void set_utf8_locale()
   // set locale to common UTF-8 for wchars to be recognized correctly
   if(setlocale(LC_CTYPE, "en_US.UTF-8") == NULL) { // if en_US.UTF-8 isn't available
     char *locale = setlocale(LC_CTYPE, "");  // try the locale that corresponds to the value of the associated environment variable LC_CTYPE
-    if (locale != NULL && 
+    if (locale != NULL &&
         (strstr(locale, "UTF-8") != NULL || strstr(locale, "UTF8") != NULL ||
          strstr(locale, "utf-8") != NULL || strstr(locale, "utf8") != NULL) )
       ;  // if locale has "UTF-8" in its name, it is cool to do nothing
@@ -127,19 +127,19 @@ void kill_existing_process()
   bool via_file = true;
   bool via_pipe = true;
   FILE *temp_file = fopen(PID_FILE, "r");
-  
+
   via_file &= (temp_file != NULL);
-  
+
   if (via_file) {  // kill process with pid obtained from PID file
     via_file &= (fscanf(temp_file, "%d", &pid) == 1);
     fclose(temp_file);
   }
-  
+
   if (!via_file) {  // if reading PID from temp_file failed, try ps-grep pipe
     via_pipe &= (sscanf(execute(COMMAND_STR_GET_PID).c_str(), "%d", &pid) == 1);
     via_pipe &= (pid != getpid());
   }
-  
+
   if (via_file || via_pipe) {
     remove(PID_FILE);
     kill(pid, SIGINT);
@@ -167,7 +167,7 @@ void determine_system_keymap()
   memset(char_keys,  '\0', sizeof(char_keys));
   memset(shift_keys, '\0', sizeof(shift_keys));
   memset(altgr_keys, '\0', sizeof(altgr_keys));
-  
+
   // get keymap from dumpkeys
   // if one knows of a better, more portable way to get wchar_t-s from symbolic keysym-s from `dumpkeys` or `xmodmap` or another, PLEASE LET ME KNOW! kthx
   std::stringstream ss, dump(execute(COMMAND_STR_DUMPKEYS));  // see example output after i.e. `loadkeys slovene`
@@ -176,53 +176,53 @@ void determine_system_keymap()
   unsigned int i = 0;   // keycode
   int index;
   int utf8code;      // utf-8 code of keysym answering keycode i
-  
+
   while (std::getline(dump, line)) {
     ss.clear();
     ss.str("");
     utf8code = 0;
-    
+
     // replace any U+#### with 0x#### for easier parsing
     index = line.find("U+", 0);
     while (static_cast<std::string::size_type>(index) != std::string::npos) {
       line[index] = '0'; line[index + 1] = 'x';
       index = line.find("U+", index);
     }
-    
+
     if (++i >= sizeof(char_or_func)) break;  // only ever map keycodes up to 128 (currently N_KEYS_DEFINED are used)
     if (!is_char_key(i)) continue;  // only map character keys of keyboard
-    
+
     assert(line.size() > 0);
     if (line[0] == 'k') {  // if line starts with 'keycode'
       index = to_char_keys_index(i);
-      
+
       ss << &line[14];  // 1st keysym starts at index 14 (skip "keycode XXX = ")
       ss >> std::hex >> utf8code;
       // 0XB00CLUELESS: 0xB00 is added to some keysyms that are preceeded with '+'; I don't really know why; see `man keymaps`; `man loadkeys` says numeric keysym values aren't to be relied on, orly?
-      if (line[14] == '+' && (utf8code & 0xB00)) utf8code ^= 0xB00; 
+      if (line[14] == '+' && (utf8code & 0xB00)) utf8code ^= 0xB00;
       char_keys[index] = static_cast<wchar_t>(utf8code);
-      
+
       // if there is a second keysym column, assume it is a shift column
       if (ss >> std::hex >> utf8code) {
         if (line[14] == '+' && (utf8code & 0xB00)) utf8code ^= 0xB00;
         shift_keys[index] = static_cast<wchar_t>(utf8code);
       }
-      
+
       // if there is a third keysym column, assume it is an altgr column
       if (ss >> std::hex >> utf8code) {
         if (line[14] == '+' && (utf8code & 0xB00)) utf8code ^= 0xB00;
         altgr_keys[index] = static_cast<wchar_t>(utf8code);
       }
-      
+
       continue;
     }
-    
+
     // else if line starts with 'shift i'
     index = to_char_keys_index(--i);
     ss << &line[21];  // 1st keysym starts at index 21 (skip "\tshift\tkeycode XXX = " or "\taltgr\tkeycode XXX = ")
     ss >> std::hex >> utf8code;
     if (line[21] == '+' && (utf8code & 0xB00)) utf8code ^= 0xB00;  // see line 0XB00CLUELESS
-    
+
     if (line[1] == 's')  // if line starts with "shift"
       shift_keys[index] = static_cast<wchar_t>(utf8code);
     if (line[1] == 'a')  // if line starts with "altgr"
@@ -237,20 +237,20 @@ void parse_input_keymap()
   memset(char_keys,  '\0', sizeof(char_keys));
   memset(shift_keys, '\0', sizeof(shift_keys));
   memset(altgr_keys, '\0', sizeof(altgr_keys));
-  
+
   stdin = freopen(args.keymap.c_str(), "r", stdin);
   if (stdin == NULL)
     error(EXIT_FAILURE, errno, "Error opening input keymap '%s'", args.keymap.c_str());
-  
+
   unsigned int i = -1;
   unsigned int line_number = 0;
   wchar_t func_string[32];
   wchar_t line[32];
-  
+
   while (!feof(stdin)) {
-    
+
     if (++i >= sizeof(char_or_func)) break;  // only ever read up to 128 keycode bindings (currently N_KEYS_DEFINED are used)
-    
+
     if (is_used_key(i)) {
       ++line_number;
       if(fgetws(line, sizeof(line), stdin) == NULL) {
@@ -266,7 +266,7 @@ void parse_input_keymap()
         error_at_line(EXIT_FAILURE, 0, args.keymap.c_str(), line_number, "No characters on line");
       line[last + 1] = '\0';
     }
-    
+
     if (is_char_key(i)) {
       unsigned int index = to_char_keys_index(i);
       if (swscanf(line, L"%lc %lc %lc", &char_keys[index], &shift_keys[index], &altgr_keys[index]) < 1) {
@@ -281,7 +281,7 @@ void parse_input_keymap()
     }
   } // while (!feof(stdin))
   fclose(stdin);
-  
+
   if (line_number < N_KEYS_DEFINED)
 #define QUOTE(x) #x  // quotes x so it can be used as (char*)
     error(EXIT_FAILURE, 0, "Too few lines in input keymap '%s'; There should be " QUOTE(N_KEYS_DEFINED) " lines!", args.keymap.c_str());
@@ -300,11 +300,11 @@ void export_keymap_to_file()
     if (is_char_key(i)) {
       index = to_char_keys_index(i);
       // only export non-null characters
-      if (char_keys[index]  != L'\0' && 
-          shift_keys[index] != L'\0' && 
+      if (char_keys[index]  != L'\0' &&
+          shift_keys[index] != L'\0' &&
           altgr_keys[index] != L'\0')
         buflen = sprintf(buffer, "%lc %lc %lc\n", char_keys[index], shift_keys[index], altgr_keys[index]);
-      else if (char_keys[index]  != L'\0' && 
+      else if (char_keys[index]  != L'\0' &&
                shift_keys[index] != L'\0')
         buflen = sprintf(buffer, "%lc %lc\n", char_keys[index], shift_keys[index]);
       else if (char_keys[index] != L'\0')
@@ -315,7 +315,7 @@ void export_keymap_to_file()
     else if (is_func_key(i)) {
       buflen = sprintf(buffer, "%ls\n", func_keys[to_func_keys_index(i)]);
     }
-    
+
     if (is_used_key(i))
       if (write(keymap_fd, buffer, buflen) < buflen)
         error(EXIT_FAILURE, errno, "Error writing to keymap file '%s'", args.keymap.c_str());
@@ -329,19 +329,19 @@ void determine_input_device()
 {
   // better be safe than sory: while running other programs, switch user to nobody
   setegid(65534); seteuid(65534);
-  
+
   // extract input number from /proc/bus/input/devices (I don't know how to do it better. If you have an idea, please let me know.)
   std::stringstream output(execute(COMMAND_STR_DEVICES));
-  
+
   std::vector<std::string> results;
   std::string line;
-  
+
   while(std::getline(output, line)) {
     std::string::size_type i = line.find("event");
     if (i != std::string::npos) i += 5; // "event".size() == 5
     if (i < line.size()) {
       int index = atoi(&line.c_str()[i]);
-      
+
       if (index != -1) {
         std::stringstream input_dev_path;
         input_dev_path << INPUT_EVENT_PATH;
@@ -352,49 +352,49 @@ void determine_input_device()
       }
     }
   }
-  
+
   if (results.size() == 0) {
     error(0, 0, "Couldn't determine keyboard device. :/");
     error(EXIT_FAILURE, 0, "Please post contents of your /proc/bus/input/devices file as a new bug report. Thanks!");
   }
 
   args.device = results[0];  // for now, use only the first found device
-  
+
   // now we reclaim those root privileges
   seteuid(0); setegid(0);
 }
 
 
 int main(int argc, char **argv)
-{  
+{
   on_exit(exit_cleanup, NULL);
-  
+
   if (geteuid()) error(EXIT_FAILURE, errno, "Got r00t?");
 
   args.logfile = (char*) DEFAULT_LOG_FILE;  // default log file will be used if none specified
-  
+
   process_command_line_arguments(argc, argv);
-  
+
   // kill existing logkeys process
   if (args.kill) kill_existing_process();
-  
+
   // if neither start nor export, that must be an error
   if (!args.start && !(args.flags & FLAG_EXPORT_KEYMAP)) { usage(); exit(EXIT_FAILURE); }
-  
+
   // if posting remote and post_size not set, set post_size to default [500K bytes]
   if (args.post_size == 0 && (!args.http_url.empty() || !args.irc_server.empty())) {
     args.post_size = 500000;
   }
-  
+
   // check for incompatible flags
   if (!args.keymap.empty() && (!(args.flags & FLAG_EXPORT_KEYMAP) && args.us_keymap)) {  // exporting uses args.keymap also
     error(EXIT_FAILURE, 0, "Incompatible flags '-m' and '-u'. See usage.");
   }
-  
+
   set_utf8_locale();
-  
+
   if (args.flags & FLAG_EXPORT_KEYMAP) {
-    if (!args.us_keymap) 
+    if (!args.us_keymap)
       determine_system_keymap();
     export_keymap_to_file();
     // = exit(0)
@@ -403,17 +403,17 @@ int main(int argc, char **argv)
     parse_input_keymap();
   else
     determine_system_keymap();
-  
+
   if (args.device.empty()) {  // no device given with -d switch
     determine_input_device();
-  } 
+  }
   else {  // event device supplied as -d argument
     std::string::size_type i = args.device.find_last_of('/');
     args.device = (std::string(INPUT_EVENT_PATH) + args.device.substr(i == std::string::npos ? 0 : i + 1));
   }
-  
+
   set_signal_handling();
-  
+
   int nochdir = 0;
   if (args.logfile[0] != '/')
        nochdir = 1;  // don't chdir (logfile specified with relative path)
@@ -421,32 +421,32 @@ int main(int argc, char **argv)
   if (daemon(nochdir, noclose) == -1)  // become daemon
     error(EXIT_FAILURE, errno, "Failed to become daemon");
   close(STDIN_FILENO); close(STDOUT_FILENO);  // leave stderr open
-  
+
   // open input device for reading
   input_fd = open(args.device.c_str(), O_RDONLY);
   if (input_fd == -1) {
     error(EXIT_FAILURE, errno, "Error opening input event device '%s'", args.device.c_str());
   }
-  
+
   // if log file is other than default, then better seteuid() to the getuid() in order to ensure user can't write to where she shouldn't!
   if (args.logfile == DEFAULT_LOG_FILE) {
     seteuid(getuid());
     setegid(getgid());
   }
-  
+
   // open log file (if file doesn't exist, create it with safe 0600 permissions)
   umask(0177);
   FILE *out = fopen(args.logfile.c_str(), "a");
   if (!out)
     error(EXIT_FAILURE, errno, "Error opening output file '%s'", args.logfile.c_str());
-  
+
   // now we need those privileges back in order to create system-wide PID_FILE
   seteuid(0); setegid(0);
   create_PID_file();
-  
+
   // now we've got everything we need, finally drop privileges by becoming 'nobody'
   //setegid(65534); seteuid(65534);   // commented-out, I forgot why xD
-  
+
   unsigned int scan_code, prev_code = 0;  // the key code of the pressed key (some codes are from "scan code set 1", some are different (see <linux/input.h>)
   struct input_event event;
   char timestamp[32];  // timestamp string, long enough to hold format "\n%F %T%z > "
@@ -454,46 +454,46 @@ int main(int argc, char **argv)
   bool altgr_in_effect = false;
   bool ctrl_in_effect = false;  // used for identifying Ctrl+C / Ctrl+D
   int count_repeats = 0;  // count_repeats differs from the actual number of repeated characters! afaik, only the OS knows how these two values are related (by respecting configured repeat speed and delay)
-  
+
   struct stat st;
   stat(args.logfile.c_str(), &st);
   off_t file_size = st.st_size;  // log file is currently file_size bytes "big"
   int inc_size;  // is added to file_size in each iteration of keypress reading, adding number of bytes written to log file in that iteration
-  
+
   time_t cur_time;
   time(&cur_time);
 #define TIME_FORMAT "%F %T%z > "  // results in YYYY-mm-dd HH:MM:SS+ZZZZ
   strftime(timestamp, sizeof(timestamp), TIME_FORMAT, localtime(&cur_time));
-  
+
   if (args.flags & FLAG_NO_TIMESTAMPS)
     file_size += fprintf(out, "Logging started at %s\n\n", timestamp);
   else
     file_size += fprintf(out, "Logging started ...\n\n%s", timestamp);
   fflush(out);
-  
+
   // infinite loop: exit gracefully by receiving SIGHUP, SIGINT or SIGTERM (of which handler closes input_fd)
   while (read(input_fd, &event, sizeof(struct input_event)) > 0) {
-    
+
 // these event.value-s aren't defined in <linux/input.h> ?
 #define EV_MAKE   1  // when key pressed
 #define EV_BREAK  0  // when key released
 #define EV_REPEAT 2  // when key switches to repeating after short delay
-    
+
     if (event.type != EV_KEY) continue;  // keyboard events are always of type EV_KEY
-    
+
     inc_size = 0;
     scan_code = event.code;
-    
+
     if (scan_code >= sizeof(char_or_func)) {  // keycode out of range, log error
       inc_size += fprintf(out, "<E-%x>", scan_code);
       if (inc_size > 0) file_size += inc_size;
       continue;
     }
-    
+
     // if remote posting is enabled and size treshold is reached
     if (args.post_size != 0 && file_size >= args.post_size && stat(UPLOADER_PID_FILE, &st) == -1) {
       fclose(out);
-      
+
       std::stringstream ss;
       for (int i = 1;; ++i) {
         ss.clear();
@@ -501,16 +501,16 @@ int main(int argc, char **argv)
         ss << args.logfile << "." << i;
         if (stat(ss.str().c_str(), &st) == -1) break;  // file .log.i doesn't yet exist
       }
-      
+
       if (rename(args.logfile.c_str(), ss.str().c_str()) == -1)  // move current log file to indexed
         error(EXIT_FAILURE, errno, "Error renaming logfile");
-      
+
       out = fopen(args.logfile.c_str(), "a");  // open empty log file with the same name
       if (!out)
         error(EXIT_FAILURE, errno, "Error opening output file '%s'", args.logfile.c_str());
-      
+
       file_size = 0;  // new log file is now empty
-      
+
       // write new timestamp
       time(&cur_time);
       strftime(timestamp, sizeof(timestamp), TIME_FORMAT, localtime(&cur_time));
@@ -518,23 +518,23 @@ int main(int argc, char **argv)
         file_size += fprintf(out, "Logging started at %s\n\n", timestamp);
       else
         file_size += fprintf(out, "Logging started ...\n\n%s", timestamp);
-      
+
       if (!args.http_url.empty() || !args.irc_server.empty()) {
         switch (fork()) {
         case -1: error(0, errno, "Error while forking remote-posting process");
-        case 0:  
+        case 0:
           start_remote_upload();  // child process will upload the .log.i files
           exit(EXIT_SUCCESS);
         }
       }
     }
-    
+
     // on key repeat ; must check before on key press
     if (event.value == EV_REPEAT) {
       ++count_repeats;
     } else if (count_repeats) {
-      if (prev_code == KEY_RIGHTSHIFT || prev_code == KEY_LEFTCTRL || 
-          prev_code == KEY_RIGHTALT   || prev_code == KEY_LEFTALT  || 
+      if (prev_code == KEY_RIGHTSHIFT || prev_code == KEY_LEFTCTRL ||
+          prev_code == KEY_RIGHTALT   || prev_code == KEY_LEFTALT  ||
           prev_code == KEY_LEFTSHIFT  || prev_code == KEY_RIGHTCTRL);  // if repeated key is modifier, do nothing
       else {
         if ((args.flags & FLAG_NO_FUNC_KEYS) && is_func_key(prev_code));  // if repeated was function key, and if we don't log function keys, then don't log repeat either
@@ -542,10 +542,10 @@ int main(int argc, char **argv)
       }
       count_repeats = 0;  // reset count for future use
     }
-    
+
     // on key press
     if (event.value == EV_MAKE) {
-      
+
       // on ENTER key or Ctrl+C/Ctrl+D event append timestamp
       if (scan_code == KEY_ENTER || scan_code == KEY_KPENTER ||
           (ctrl_in_effect && (scan_code == KEY_C || scan_code == KEY_D))) {
@@ -560,14 +560,14 @@ int main(int argc, char **argv)
         if (inc_size > 0) file_size += inc_size;
         continue;  // but don't log "<Enter>"
       }
-      
+
       if (scan_code == KEY_LEFTSHIFT || scan_code == KEY_RIGHTSHIFT)
         shift_in_effect = true;
       if (scan_code == KEY_RIGHTALT)
         altgr_in_effect = true;
       if (scan_code == KEY_LEFTCTRL || scan_code == KEY_RIGHTCTRL)
         ctrl_in_effect = true;
-      
+
       // print character or string coresponding to received keycode; only print chars when not \0
       if (is_char_key(scan_code)) {
         wchar_t wch;
@@ -579,7 +579,7 @@ int main(int argc, char **argv)
             else
               wch = char_keys[to_char_keys_index(scan_code)];
           }
-        } 
+        }
         else if (shift_in_effect) {
           wch = shift_keys[to_char_keys_index(scan_code)];
           if (wch == L'\0')
@@ -587,20 +587,20 @@ int main(int argc, char **argv)
         }
         else  // neither altgr nor shift are effective, this is a normal char
           wch = char_keys[to_char_keys_index(scan_code)];
-        
+
         if (wch != L'\0') inc_size += fprintf(out, "%lc", wch);  // write character to log file
       }
       else if (is_func_key(scan_code)) {
         if (!(args.flags & FLAG_NO_FUNC_KEYS)) {  // only log function keys if --no-func-keys not requested
           inc_size += fprintf(out, "%ls", func_keys[to_func_keys_index(scan_code)]);
-        } 
+        }
         else if (scan_code == KEY_SPACE || scan_code == KEY_TAB) {
           inc_size += fprintf(out, " ");  // but always log a single space for Space and Tab keys
         }
       }
       else inc_size += fprintf(out, "<E-%x>", scan_code);  // keycode is neither of character nor function, log error
     } // if (EV_MAKE)
-    
+
     // on key release
     if (event.value == EV_BREAK) {
       if (scan_code == KEY_LEFTSHIFT || scan_code == KEY_RIGHTSHIFT)
@@ -610,22 +610,22 @@ int main(int argc, char **argv)
       if (scan_code == KEY_LEFTCTRL || scan_code == KEY_RIGHTCTRL)
         ctrl_in_effect = false;
     }
-    
+
     prev_code = scan_code;
     fflush(out);
     if (inc_size > 0) file_size += inc_size;
-    
+
   } // while (read(input_fd))
-  
+
   // append final timestamp, close files and exit
   time(&cur_time);
   strftime(timestamp, sizeof(timestamp), "%F %T%z", localtime(&cur_time));
   fprintf(out, "\n\nLogging stopped at %s\n\n", timestamp);
-  
+
   fclose(out);
-  
+
   remove(PID_FILE);
-  
+
   exit(EXIT_SUCCESS);
 } // main()
 
@@ -635,4 +635,3 @@ int main(int argc, char** argv)
 {
   return logkeys::main(argc, argv);
 }
-
