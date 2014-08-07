@@ -615,7 +615,7 @@ int main(int argc, char **argv)
       if(args.frequency) {
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        fprintf(out, "%d:%06d [%x] %s\n",
+        fprintf(out, "%d:%06d [%02x] %s\n",
                 (int)tv.tv_sec, (int)tv.tv_usec, scan_code, string);
       }
       else
