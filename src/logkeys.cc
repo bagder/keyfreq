@@ -461,16 +461,19 @@ int main(int argc, char **argv)
   int inc_size;  // is added to file_size in each iteration of keypress reading, adding number of bytes written to log file in that iteration
 
   time_t cur_time;
-  time(&cur_time);
+
 #define TIME_FORMAT "%F %T%z > "  // results in YYYY-mm-dd HH:MM:SS+ZZZZ
-  strftime(timestamp, sizeof(timestamp), TIME_FORMAT, localtime(&cur_time));
 
-  if (args.flags & FLAG_NO_TIMESTAMPS)
-    file_size += fprintf(out, "Logging started at %s\n\n", timestamp);
-  else
-    file_size += fprintf(out, "Logging started ...\n\n%s", timestamp);
-  fflush(out);
+  if(!args.frequency) {
+    time(&cur_time);
+    strftime(timestamp, sizeof(timestamp), TIME_FORMAT, localtime(&cur_time));
 
+    if (args.flags & FLAG_NO_TIMESTAMPS)
+      file_size += fprintf(out, "Logging started at %s\n\n", timestamp);
+    else
+      file_size += fprintf(out, "Logging started ...\n\n%s", timestamp);
+    fflush(out);
+  }
   // infinite loop: exit gracefully by receiving SIGHUP, SIGINT or SIGTERM (of which handler closes input_fd)
   while (read(input_fd, &event, sizeof(struct input_event)) > 0) {
 
