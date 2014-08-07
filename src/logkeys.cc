@@ -545,9 +545,10 @@ int main(int argc, char **argv)
 
     // on key press
     if (event.value == EV_MAKE) {
+      char string[32];
 
-      // on ENTER key or Ctrl+C/Ctrl+D event append timestamp
-      if (scan_code == KEY_ENTER || scan_code == KEY_KPENTER ||
+      // on ENTER key or Ctrl+C/Ctrl+D event append timestamp, unless frequency mode
+      if ((!args.frequency && (scan_code == KEY_ENTER || scan_code == KEY_KPENTER)) ||
           (ctrl_in_effect && (scan_code == KEY_C || scan_code == KEY_D))) {
         if (ctrl_in_effect)
           inc_size += fprintf(out, "%lc", char_keys[to_char_keys_index(scan_code)]);  // log C or D
@@ -588,17 +589,33 @@ int main(int argc, char **argv)
         else  // neither altgr nor shift are effective, this is a normal char
           wch = char_keys[to_char_keys_index(scan_code)];
 
-        if (wch != L'\0') inc_size += fprintf(out, "%lc", wch);  // write character to log file
+        if (wch != L'\0')
+          inc_size += snprintf(string, sizeof(string),
+                               "%lc", wch);  // write character string
       }
       else if (is_func_key(scan_code)) {
         if (!(args.flags & FLAG_NO_FUNC_KEYS)) {  // only log function keys if --no-func-keys not requested
-          inc_size += fprintf(out, "%ls", func_keys[to_func_keys_index(scan_code)]);
+          inc_size += snprintf(string, sizeof(string),
+                               "%ls", func_keys[to_func_keys_index(scan_code)]);
         }
         else if (scan_code == KEY_SPACE || scan_code == KEY_TAB) {
-          inc_size += fprintf(out, " ");  // but always log a single space for Space and Tab keys
+          // but always log a single space for Space and Tab keys
+          inc_size += snprintf(string, sizeof(string), " ");
         }
       }
-      else inc_size += fprintf(out, "<E-%x>", scan_code);  // keycode is neither of character nor function, log error
+      else
+        // keycode is neither of character nor function, log error
+        inc_size += snprintf(string, sizeof(string), "<E-%x>", scan_code);
+
+      if(args.frequency) {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        fprintf(out, "%d:%06d [%x] %s\n",
+                (int)tv.tv_sec, (int)tv.tv_usec, scan_code, string);
+      }
+      else
+        fprintf(out, "%s", string);
+
     } // if (EV_MAKE)
 
     // on key release

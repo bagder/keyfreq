@@ -16,6 +16,7 @@ namespace logkeys {
 struct arguments
 {
   bool start;          // start keylogger, -s switch
+  bool frequency;      // detailed logging
   bool kill;           // stop keylogger, -k switch
   bool us_keymap;      // use default US keymap, -u switch
   std::string logfile;      // user-specified log filename, -o switch
@@ -42,6 +43,7 @@ void process_command_line_arguments(int argc, char **argv)
 
   struct option long_options[] = {
     {"start",     no_argument,       0, 's'},
+    {"frequency", no_argument,       0, 'f'},
     {"keymap",    required_argument, 0, 'm'},
     {"output",    required_argument, 0, 'o'},
     {"us-keymap", no_argument,       0, 'u'},
@@ -60,11 +62,12 @@ void process_command_line_arguments(int argc, char **argv)
   char c;
   int option_index;
 
-  while ((c = getopt_long(argc, argv, "sm:o:ukd:?", long_options, &option_index)) != -1)
+  while ((c = getopt_long(argc, argv, "sfm:o:ukd:?", long_options, &option_index)) != -1)
   {
     switch (c)
     {
       case 's': args.start = true;     break;
+      case 'f': args.frequency = true; break;
       case 'm': args.keymap = optarg;  break;
       case 'o': args.logfile = optarg; break;
       case 'u': args.us_keymap = true; break;

@@ -18,6 +18,7 @@ void usage()
 "Log depressed keyboard keys.\n"
 "\n"
 "  -s, --start               start logging keypresses\n"
+"  -f, --frequency           log details for key frequency analysis\n"
 "  -m, --keymap=FILE         use keymap FILE\n"
 "  -o, --output=FILE         log output to FILE [" DEFAULT_LOG_FILE "]\n"
 "  -u, --us-keymap           use en_US keymap instead of configured default\n"
