@@ -8,6 +8,8 @@ logkeys \- a GNU/Linux keylogger that works!
 .br
            [\fB--post-http=\fIURL\fR] [\fB--post-size=\fISIZE\fR]
 .br
+           [\fB--frequency\fR]
+.br
 .B logkeys \fB-k\fR
 .br
 .B logkeys [\fB--export-keymap=\fIkeymap\fR]
@@ -42,6 +44,11 @@ Starts the keylogging daemon process.
 .TP
 \fB-k\fR, \fB-\-kill\fR
 Terminates the running logkeys process.
+
+.TP
+\fB-f\fR, \fB-\-frequency\fR
+Run the program in frequency logging mode. It then logs a time stamp for every
+keypress to allow key frequency analyses and more.
 
 .TP
 \fB-o\fR, \fB-\-output\fR=\fIlogfile\fR
