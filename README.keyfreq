@@ -1,0 +1,10 @@
+
+Key frequency logging
+=====================
+
+ Store each keypress with its own time stamp, scan code and key representation
+
+ Do not count key repeat, it is still just a single key press.
+
+ The key map is weird from the original code, I've provided my own setup as an
+ example input for further experiments. See keymap-example.
