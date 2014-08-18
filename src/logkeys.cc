@@ -543,7 +543,11 @@ int main(int argc, char **argv)
           prev_code == KEY_LEFTSHIFT  || prev_code == KEY_RIGHTCTRL);  // if repeated key is modifier, do nothing
       else {
         if ((args.flags & FLAG_NO_FUNC_KEYS) && is_func_key(prev_code));  // if repeated was function key, and if we don't log function keys, then don't log repeat either
-        else inc_size += fprintf(out, "<#+%d>", count_repeats);
+        else if(!args.frequency) {
+          // only log repeats if not in frequency mode, we count a long press as a single
+          // press then!
+          inc_size += fprintf(out, "<#+%d>", count_repeats);
+        }
       }
       count_repeats = 0;  // reset count for future use
     }
