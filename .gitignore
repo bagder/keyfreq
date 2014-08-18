@@ -1,0 +1,14 @@
+Makefile
+config.h
+config.log
+config.status
+man/Makefile
+scripts/Makefile
+src/.deps/
+src/Makefile
+src/llk
+src/*.o
+src/llkk
+src/logkeys
+stamp-h1
+*~
