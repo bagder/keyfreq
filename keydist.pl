@@ -42,21 +42,24 @@ while(<STDIN>) {
 
 my $totalhours = ($last - $first)/3600;
 my $totalminutes = ($last - $first)/60;
-printf "A total of $presses keypresses, %d unique keys over %d hours\n", scalar(keys %codes), $totalhours;
+my $totaldays = $totalhours / 24;
+printf "A total of $presses keypresses, %d unique keys over %d hours (%0.1f days)\n", scalar(keys %codes), $totalhours, $totaldays;
+
+printf "Average %d keypresses/day\n", $presses/$totaldays;
 
 my $ahours=scalar(keys %hours);
 my $aminutes=scalar(keys %minutes);
 printf "%d active hours, %d active minutes\n", $ahours, $aminutes;
 
-printf "%d presses/active hour (%d%% active hours)\n%d presses/active minute (%d%% active minutes)\n",
+printf "%d key presses/active hour (%d%% active hours)\n%d key presses/active minute (%d%% active minutes)\n",
     $presses/$ahours, $ahours*100/$totalhours,
     $presses/$aminutes, $aminutes*100/$totalminutes;
 
 my @top = sort { $hours{$b} <=> $hours{$a} } keys %hours;
-printf "Most keypresses during a single hour: %d (%s)\n", $hours{$top[0]}, $top[0];
+printf "Most key presses during a single hour: %d (%s)\n", $hours{$top[0]}, $top[0];
 
 my @top = sort { $minutes{$b} <=> $minutes{$a} } keys %minutes;
-printf "Most keypresses during a single minute: %d (%s)\n", $minutes{$top[0]}, $top[0];
+printf "Most key presses during a single minute: %d (%s)\n", $minutes{$top[0]}, $top[0];
 
 my @top = sort { $dayhour{$b} <=> $dayhour{$a} } keys %dayhour;
 printf "The most active hour each day: %d (%s)\n", $dayhour{$top[0]}, $top[0];
