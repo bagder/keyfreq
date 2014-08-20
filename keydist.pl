@@ -12,6 +12,15 @@ my %minutes;
 my %dayhour;
 my %dayminute;
 
+my @daynames=("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+              "Saturday");
+
+# set up the hash table with 24 entries
+for(0 .. 23) {
+    my $h = sprintf("%02d", $_);
+    $dayhour{"$h"}=0;
+}
+
 while(<STDIN>) {
     if($_ =~ /^(\d+):(\d+) \[([0-9a-f]+)\] (.*)/) {
         my ($secs, $msecs, $code, $symb)=($1, $2, $3, $4);
@@ -29,13 +38,16 @@ while(<STDIN>) {
             localtime($secs);
         $year += 1900;
         $min = sprintf("%02d", $min);
+        $hour = sprintf("%02d", $hour);
         $mon = sprintf("%02d", $mon+1);
         $mday = sprintf("%02d", $mday);
+        $wday = sprintf("%02d", $wday);
 
         $hours{"$year-$mon-$mday $hour:00"}++;
         $minutes{"$year-$mon-$mday $hour:$min"}++;
 
-        $dayhour{"$hour:00"}++;
+        $weekday{$wday}++;
+        $dayhour{"$hour"}++;
         $dayminute{"$hour:$min"}++;
     }
 }
@@ -61,15 +73,59 @@ printf "Most key presses during a single hour: %d (%s)\n", $hours{$top[0]}, $top
 my @top = sort { $minutes{$b} <=> $minutes{$a} } keys %minutes;
 printf "Most key presses during a single minute: %d (%s)\n", $minutes{$top[0]}, $top[0];
 
-my @top = sort { $dayhour{$b} <=> $dayhour{$a} } keys %dayhour;
-printf "The most active hour each day: %d (%s)\n", $dayhour{$top[0]}, $top[0];
+my @htop = sort { $dayhour{$b} <=> $dayhour{$a} } keys %dayhour;
+printf "The most active hour each day: %d (%s)\n", $dayhour{$htop[0]}, $htop[0];
 
 my @top = sort { $dayminute{$b} <=> $dayminute{$a} } keys %dayminute;
 printf "The most active minute each day: %d (%s)\n", $dayminute{$top[0]}, $top[0];
 
+my @wtop = sort { $weekday{$b} <=> $weekday{$a} } keys %weekday;
+printf "The most active day of the week: %d key presses (%s)\n", $weekday{$wtop[0]},
+    $daynames[$wtop[0]];
+
+my @top = sort { $dayhour{$a} <=> $dayhour{$b} } keys %dayhour;
+
+for my $t (@top) {
+    if($dayhour{$t} < 1) {
+        push @idle, $t;
+        next;
+    }
+    last;
+}
+
+my $silent;
+if($idle[0]) {
+    $silent=join(", ", sort @idle);
+}
+else {
+    $silent = "NONE";
+}
+printf "Inactive hours: %s\n", $silent;
+
+print "\nThe 5 most active hours:\n";
+$i=1;
+for my $h (@htop) {
+    printf "  $i: %02d-%02d %d key presses (%0.1f%%)\n", $h, $h+1, $dayhour{$h},
+    $dayhour{$h}*100/$presses;
+    $i++;
+    if($i > 5) {
+        last;
+    }
+}
+
+print "\nWeek day frequency distribution:\n";
+$i=1;
+for my $w (@wtop) {
+    printf("  $i: %s %d key presses (%0.1f%%)\n", $daynames[$w], $weekday{$w},
+           $weekday{$w}*100/$presses);
+    $i++;
+}
+
 print "\nKeypress frequency (scan code, number of presses, symbol, share)\n";
 
+$i=1;
 for my $c (sort { $codes{$b} <=> $codes{$a} } keys %codes) {
-    printf "%s: %d ('%s') %0.1f%%\n", $c, $codes{$c}, $keymap{$c},
-    ($codes{$c}*100)/$presses;
+    printf ("  $i: %s: %d ('%s') %0.1f%%\n", $c, $codes{$c}, $keymap{$c},
+            ($codes{$c}*100)/$presses);
+    $i++;
 }
