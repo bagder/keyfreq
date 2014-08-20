@@ -24,6 +24,11 @@ for(0 .. 23) {
 while(<STDIN>) {
     if($_ =~ /^(\d+):(\d+) \[([0-9a-f]+)\] (.*)/) {
         my ($secs, $msecs, $code, $symb)=($1, $2, $3, $4);
+
+        if($symb eq " ") {
+            $symb = "<Space>";
+        }
+
         $codes{$code}++;
         $keymap{$code}=$symb;
         $symbols{$symb}++;
@@ -49,6 +54,31 @@ while(<STDIN>) {
         $weekday{$wday}++;
         $dayhour{"$hour"}++;
         $dayminute{"$hour:$min"}++;
+
+        $us = ($secs - $first)*1000000 + $msecs;
+
+        if($symb eq "<BckSp>") {
+
+            if(($us - $ous) < 300000) {
+                # store symbol before backspace if within .3 second
+                $beforebcksp{$nonbcksp}++;
+            }
+            if(scalar(@nonbcksp) > $bestnonbcksp) {
+                $bestnonbcksp = scalar(@nonbcksp);
+                @bestnonbcksp = @nonbcksp;
+            }
+            undef @nonbcksp;
+        }
+        else {
+            $nonbcksp = $symb;
+            push @nonbcksp, $symb;
+        }
+        
+        $ocode = $code;
+        $osymb = $symb;
+        $ous = $us;
+        $osecs = $secs;
+        $omsecs = $msecs;
     }
 }
 
@@ -82,6 +112,9 @@ printf "The most active minute each day: %d (%s)\n", $dayminute{$top[0]}, $top[0
 my @wtop = sort { $weekday{$b} <=> $weekday{$a} } keys %weekday;
 printf "The most active day of the week: %d key presses (%s)\n", $weekday{$wtop[0]},
     $daynames[$wtop[0]];
+
+printf "Longest key sequence without backspace: %d\n", $bestnonbcksp;
+
 
 my @top = sort { $dayhour{$a} <=> $dayhour{$b} } keys %dayhour;
 
@@ -119,6 +152,19 @@ for my $w (@wtop) {
     printf("  $i: %s %d key presses (%0.1f%%)\n", $daynames[$w], $weekday{$w},
            $weekday{$w}*100/$presses);
     $i++;
+}
+
+my @top = sort { $beforebcksp{$b} <=> $beforebcksp{$a} } keys %beforebcksp;
+
+print "\nThe 10 most backspaced symbols (within 0.3 seconds and just before):\n";
+$i=1;
+for my $h (@top) {
+    printf "  $i: %s %d times (%0.1f%%)\n", $h, $beforebcksp{$h},
+    $beforebcksp{$h}*100/$symbols{'<BckSp>'};
+    $i++;
+    if($i > 10) {
+        last;
+    }
 }
 
 print "\nKeypress frequency (scan code, number of presses, symbol, share)\n";
