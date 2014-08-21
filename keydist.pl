@@ -142,16 +142,29 @@ else {
 }
 printf "Inactive hours: %s\n", $silent;
 
-print "\nThe 5 most active hours of the day:\n";
+print "\nHourly activity:\n";
 $i=1;
 for my $h (@htop) {
-    printf "  $i: %02d-%02d %d keys (%0.1f%%)\n", $h, $h+1, $dayhour{$h},
-    $dayhour{$h}*100/$presses;
-    $i++;
-    if($i > 5) {
+    if($dayhour{$h}) {
+        printf "  $i: %02d-%02d %d keys (%0.1f%%)\n", $h, $h+1, $dayhour{$h},
+        $dayhour{$h}*100/$presses;
+        $i++;
+    }
+    else {
         last;
     }
 }
+
+print "\nActivity distribution over the day, per hour:\n";
+$i=1;
+my $max = $dayhour{$htop[0]};
+for(00 .. 23) {
+    my $h = sprintf("%02d", $_);
+    my $width = ($dayhour{$h}/$max)*75;
+
+    printf "%s: ".('#' x $width)."\n", $h;
+}
+
 
 print "\nWeek day frequency distribution:\n";
 $i=1;
@@ -160,6 +173,18 @@ for my $w (@wtop) {
            $weekday{$w}*100/$presses);
     $i++;
 }
+
+print "\nActivity distribution over the week, per day:\n";
+$i=1;
+my $max = $weekday{$wtop[0]};
+for((1, 2, 3, 4, 5, 6, 0)) {
+    my $d = sprintf("%02d", $_);
+    my $width = ($weekday{$d}/$max)*74;
+
+    printf "%.3s: ".('#' x $width)."\n", $daynames[$d];
+}
+
+
 
 my @top = sort { $beforebcksp{$b} <=> $beforebcksp{$a} } keys %beforebcksp;
 
