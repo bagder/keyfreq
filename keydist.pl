@@ -85,23 +85,23 @@ while(<STDIN>) {
 my $totalhours = ($last - $first)/3600;
 my $totalminutes = ($last - $first)/60;
 my $totaldays = $totalhours / 24;
-printf "A total of $presses keypresses, %d unique keys over %d hours (%0.1f days)\n", scalar(keys %codes), $totalhours, $totaldays;
+printf "A total of $presses keys, %d unique keys over %d hours (%0.1f days)\n", scalar(keys %codes), $totalhours, $totaldays;
 
-printf "Average %d keypresses/day\n", $presses/$totaldays;
+printf "Average %d keys/day\n", $presses/$totaldays;
 
 my $ahours=scalar(keys %hours);
 my $aminutes=scalar(keys %minutes);
 printf "%d active hours, %d active minutes\n", $ahours, $aminutes;
 
-printf "%d key presses/active hour (%d%% active hours)\n%d key presses/active minute (%d%% active minutes)\n",
+printf "%d keys/active hour (%d%% active hours)\n%d keys/active minute (%d%% active minutes)\n",
     $presses/$ahours, $ahours*100/$totalhours,
     $presses/$aminutes, $aminutes*100/$totalminutes;
 
 my @top = sort { $hours{$b} <=> $hours{$a} } keys %hours;
-printf "Most key presses during a single hour: %d (%s)\n", $hours{$top[0]}, $top[0];
+printf "Most keys during a single hour: %d (%s)\n", $hours{$top[0]}, $top[0];
 
 my @top = sort { $minutes{$b} <=> $minutes{$a} } keys %minutes;
-printf "Most key presses during a single minute: %d (%s)\n", $minutes{$top[0]}, $top[0];
+printf "Most keys during a single minute: %d (%s)\n", $minutes{$top[0]}, $top[0];
 
 my @htop = sort { $dayhour{$b} <=> $dayhour{$a} } keys %dayhour;
 printf "The most active hour each day: %d (%s)\n", $dayhour{$htop[0]}, $htop[0];
@@ -110,7 +110,7 @@ my @top = sort { $dayminute{$b} <=> $dayminute{$a} } keys %dayminute;
 printf "The most active minute each day: %d (%s)\n", $dayminute{$top[0]}, $top[0];
 
 my @wtop = sort { $weekday{$b} <=> $weekday{$a} } keys %weekday;
-printf "The most active day of the week: %d key presses (%s)\n", $weekday{$wtop[0]},
+printf "The most active day of the week: %d keys (%s)\n", $weekday{$wtop[0]},
     $daynames[$wtop[0]];
 
 printf "Longest key sequence without backspace: %d\n", $bestnonbcksp;
@@ -138,7 +138,7 @@ printf "Inactive hours: %s\n", $silent;
 print "\nThe 5 most active hours:\n";
 $i=1;
 for my $h (@htop) {
-    printf "  $i: %02d-%02d %d key presses (%0.1f%%)\n", $h, $h+1, $dayhour{$h},
+    printf "  $i: %02d-%02d %d keys (%0.1f%%)\n", $h, $h+1, $dayhour{$h},
     $dayhour{$h}*100/$presses;
     $i++;
     if($i > 5) {
@@ -149,7 +149,7 @@ for my $h (@htop) {
 print "\nWeek day frequency distribution:\n";
 $i=1;
 for my $w (@wtop) {
-    printf("  $i: %s %d key presses (%0.1f%%)\n", $daynames[$w], $weekday{$w},
+    printf("  $i: %s %d keys (%0.1f%%)\n", $daynames[$w], $weekday{$w},
            $weekday{$w}*100/$presses);
     $i++;
 }
@@ -167,7 +167,7 @@ for my $h (@top) {
     }
 }
 
-print "\nKeypress frequency (scan code, number of presses, symbol, share)\n";
+print "\nKey frequency (scan code, number of presses, symbol, share)\n";
 
 $i=1;
 for my $c (sort { $codes{$b} <=> $codes{$a} } keys %codes) {
