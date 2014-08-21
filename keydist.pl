@@ -104,13 +104,13 @@ my @top = sort { $minutes{$b} <=> $minutes{$a} } keys %minutes;
 printf "Most keys during a single minute: %d (%s)\n", $minutes{$top[0]}, $top[0];
 
 my @htop = sort { $dayhour{$b} <=> $dayhour{$a} } keys %dayhour;
-printf "The most active hour each day: %d (%s)\n", $dayhour{$htop[0]}, $htop[0];
+printf "Most active hour of the day: %d (%s)\n", $dayhour{$htop[0]}, $htop[0];
 
 my @top = sort { $dayminute{$b} <=> $dayminute{$a} } keys %dayminute;
-printf "The most active minute each day: %d (%s)\n", $dayminute{$top[0]}, $top[0];
+printf "Most active minute of the day: %d (%s)\n", $dayminute{$top[0]}, $top[0];
 
 my @wtop = sort { $weekday{$b} <=> $weekday{$a} } keys %weekday;
-printf "The most active day of the week: %d keys (%s)\n", $weekday{$wtop[0]},
+printf "Most active day of the week: %d keys (%s)\n", $weekday{$wtop[0]},
     $daynames[$wtop[0]];
 
 printf "Longest key sequence without backspace: %d\n", $bestnonbcksp;
@@ -135,7 +135,7 @@ else {
 }
 printf "Inactive hours: %s\n", $silent;
 
-print "\nThe 5 most active hours:\n";
+print "\nThe 5 most active hours of the day:\n";
 $i=1;
 for my $h (@htop) {
     printf "  $i: %02d-%02d %d keys (%0.1f%%)\n", $h, $h+1, $dayhour{$h},
