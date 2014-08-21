@@ -72,6 +72,13 @@ while(<STDIN>) {
         else {
             $nonbcksp = $symb;
             push @nonbcksp, $symb;
+
+            if($osymb eq "<BckSp>") {
+                if(($us - $ous) < 300000) {
+                    # store symbol after backspace if within .3 second
+                    $afterbcksp{$symb}++;
+                }
+            }
         }
         
         $ocode = $code;
@@ -167,11 +174,23 @@ for my $h (@top) {
     }
 }
 
-print "\nKey frequency (scan code, number of presses, symbol, share)\n";
+my @top = sort { $afterbcksp{$b} <=> $afterbcksp{$a} } keys %afterbcksp;
+
+print "\nThe 10 most used keys after a backspace (within 0.3 seconds):\n";
+$i=1;
+for my $h (@top) {
+    printf "  $i: %s %d times\n", $h, $afterbcksp{$h};
+    $i++;
+    if($i > 10) {
+        last;
+    }
+}
+
+print "\nKey frequency (times used, symbol, share)\n";
 
 $i=1;
 for my $c (sort { $codes{$b} <=> $codes{$a} } keys %codes) {
-    printf ("  $i: %s: %d ('%s') %0.1f%%\n", $c, $codes{$c}, $keymap{$c},
+    printf ("  %2d: %8s %d times (%0.1f%%)\n", $i, $keymap{$c}, $codes{$c},
             ($codes{$c}*100)/$presses);
     $i++;
 }
