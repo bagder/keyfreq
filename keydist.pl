@@ -48,6 +48,7 @@ while(<STDIN>) {
         $mday = sprintf("%02d", $mday);
         $wday = sprintf("%02d", $wday);
 
+        $days{"$year-$mon-$mday"}++;
         $hours{"$year-$mon-$mday $hour:00"}++;
         $minutes{"$year-$mon-$mday $hour:$min"}++;
 
@@ -94,11 +95,14 @@ my $totalminutes = ($last - $first)/60;
 my $totaldays = $totalhours / 24;
 printf "A total of $presses keys, %d unique keys over %d hours (%0.1f days)\n", scalar(keys %codes), $totalhours, $totaldays;
 
-printf "Average %d keys/day\n", $presses/$totaldays;
+my $dailyaverage = $presses/$totaldays;
+printf "Average %d keys/day\n", $dailyaverage;
 
+my $adays=scalar(keys %days);
 my $ahours=scalar(keys %hours);
 my $aminutes=scalar(keys %minutes);
-printf "%d active hours, %d active minutes\n", $ahours, $aminutes;
+printf "%d active days, %d active hours, %d active minutes\n",
+    $adays, $ahours, $aminutes;
 
 printf "%d keys/active hour (%d%% active hours)\n%d keys/active minute (%d%% active minutes)\n",
     $presses/$ahours, $ahours*100/$totalhours,
@@ -142,11 +146,11 @@ else {
 }
 printf "Inactive hours: %s\n", $silent;
 
-print "\nHourly activity:\n";
+printf "\nHourly activity (keys/hour)\n";
 $i=1;
 for my $h (@htop) {
     if($dayhour{$h}) {
-        printf "  $i: %02d-%02d %d keys (%0.1f%%)\n", $h, $h+1, $dayhour{$h},
+        printf "  $i: %02d-%02d %d keys (%0.1f%%)\n", $h, $h+1, $dayhour{$h}/$totaldays,
         $dayhour{$h}*100/$presses;
         $i++;
     }
