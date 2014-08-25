@@ -95,8 +95,16 @@ my $totalminutes = ($last - $first)/60;
 my $totaldays = $totalhours / 24;
 printf "A total of $presses keys, %d unique keys over %d hours (%0.1f days)\n", scalar(keys %codes), $totalhours, $totaldays;
 
+for(1 .. 5) {
+    $wdaypresses += $weekday{ sprintf("%02d", $_) };
+}
+for((0,6)) {
+    $wendpresses += $weekday{ sprintf("%02d", $_) };
+}
+
 my $dailyaverage = $presses/$totaldays;
-printf "Average %d keys/day\n", $dailyaverage;
+printf "Average %d keys/day.  Weekday average: %d.  Weekend average: %d.\n", $dailyaverage,
+    $wdaypresses/5, $wendpresses/2;
 
 my $adays=scalar(keys %days);
 my $ahours=scalar(keys %hours);
