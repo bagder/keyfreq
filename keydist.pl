@@ -52,6 +52,11 @@ while(<STDIN>) {
         $hours{"$year-$mon-$mday $hour:00"}++;
         $minutes{"$year-$mon-$mday $hour:$min"}++;
 
+        if(($wday == 0) || ($wday == 6)) {
+            # a weekend key
+            $weekendkeys++;
+            $weekends{"$year-$mon-$mday"}++;
+        }
         $weekday{$wday}++;
         $dayhour{"$hour"}++;
         $dayminute{"$hour:$min"}++;
@@ -93,7 +98,17 @@ while(<STDIN>) {
 my $totalhours = ($last - $first)/3600;
 my $totalminutes = ($last - $first)/60;
 my $totaldays = $totalhours / 24;
-printf "A total of $presses keys, %d unique keys over %d hours (%0.1f days)\n", scalar(keys %codes), $totalhours, $totaldays;
+
+my $totalkeys = scalar(keys %codes);
+printf "A total of $presses keys, %d unique keys over %d hours (%0.1f days)\n",
+    $totalkeys, $totalhours, $totaldays, scalar(keys %weekends);
+
+printf "Out of that, %d keys (%.1f%%) were used on weekends\n", $weekendkeys,
+    $weekendkeys*100/$presses;
+
+my $totalsymbols = scalar(keys %symbols);
+printf "A total of %d symbols were used, %0.1f symbols/key\n", $totalsymbols,
+    $totalsymbols/$totalkeys;
 
 for(1 .. 5) {
     $wdaypresses += $weekday{ sprintf("%02d", $_) };
@@ -104,7 +119,8 @@ for((0,6)) {
 
 my $dailyaverage = $presses/$totaldays;
 printf "Average %d keys/day.  Weekday average: %d.  Weekend average: %d.\n", $dailyaverage,
-    $wdaypresses/5, $wendpresses/2;
+    $wdaypresses/($totaldays - scalar(keys %weekends)),
+    $wendpresses/scalar(keys %weekends);
 
 my $adays=scalar(keys %days);
 my $ahours=scalar(keys %hours);
@@ -125,8 +141,8 @@ printf "Most keys during a single minute: %d (%s)\n", $minutes{$top[0]}, $top[0]
 my @htop = sort { $dayhour{$b} <=> $dayhour{$a} } keys %dayhour;
 printf "Most active hour of the day: %d (%s)\n", $dayhour{$htop[0]}, $htop[0];
 
-my @top = sort { $dayminute{$b} <=> $dayminute{$a} } keys %dayminute;
-printf "Most active minute of the day: %d (%s)\n", $dayminute{$top[0]}, $top[0];
+my @mintop = sort { $dayminute{$b} <=> $dayminute{$a} } keys %dayminute;
+printf "Most active minute of the day: %d (%s)\n", $dayminute{$mintop[0]}, $mintop[0];
 
 my @wtop = sort { $weekday{$b} <=> $weekday{$a} } keys %weekday;
 printf "Most active day of the week: %d keys (%s)\n", $weekday{$wtop[0]},
@@ -142,7 +158,12 @@ for my $t (@top) {
         push @idle, $t;
         next;
     }
-    last;
+    # less than one percent of the presses
+    elsif($dayhour{$t} < $presses/100) {
+        push @slow, $t;
+        next;
+    }
+
 }
 
 my $silent;
@@ -154,7 +175,16 @@ else {
 }
 printf "Inactive hours: %s\n", $silent;
 
-printf "\nHourly activity (keys/hour)\n";
+my $s;
+if($slow[0]) {
+    $s=join(", ", sort @slow);
+}
+else {
+    $s = "NONE";
+}
+print "Slow hours: $s (less than 1% of total)\n";
+
+printf "\nHourly activity (keys during that hour/day)\n";
 $i=1;
 for my $h (@htop) {
     if($dayhour{$h}) {
@@ -166,6 +196,20 @@ for my $h (@htop) {
         last;
     }
 }
+
+
+printf "\nTop-10 most active minutes over the day\n";
+$i=1;
+for my $m (@mintop) {
+    if($dayminute{$m}) {
+        printf "  $i: %s %d keys\n", $m, $dayminute{$m};
+    }
+    $i++;
+    if($i > 10) {
+        last;
+    }
+}
+
 
 print "\nActivity distribution over the day, per hour:\n";
 $i=1;
