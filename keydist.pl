@@ -132,6 +132,9 @@ printf "%d keys/active hour (%d%% active hours)\n%d keys/active minute (%d%% act
     $presses/$ahours, $ahours*100/$totalhours,
     $presses/$aminutes, $aminutes*100/$totalminutes;
 
+my @top = sort { $days{$b} <=> $days{$a} } keys %days;
+printf "Most keys during a single day: %d (%s)\n", $days{$top[0]}, $top[0];
+
 my @top = sort { $hours{$b} <=> $hours{$a} } keys %hours;
 printf "Most keys during a single hour: %d (%s)\n", $hours{$top[0]}, $top[0];
 
@@ -182,13 +185,14 @@ if($slow[0]) {
 else {
     $s = "NONE";
 }
-print "Slow hours: $s (less than 1% of total)\n";
+print "Slow hours: $s (hours with less than 1% of total keys)\n";
 
 printf "\nHourly activity (keys during that hour/day)\n";
 $i=1;
 for my $h (@htop) {
     if($dayhour{$h}) {
-        printf "  $i: %02d-%02d %d keys (%0.1f%%)\n", $h, $h+1, $dayhour{$h}/$totaldays,
+        printf " %2d: %02d-%02d %7d keys (%0.1f%%)\n",
+        $i, $h, $h+1, $dayhour{$h}/$totaldays,
         $dayhour{$h}*100/$presses;
         $i++;
     }
