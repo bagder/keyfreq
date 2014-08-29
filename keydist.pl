@@ -159,6 +159,7 @@ my @top = sort { $dayhour{$a} <=> $dayhour{$b} } keys %dayhour;
 for my $t (@top) {
     if($dayhour{$t} < 1) {
         push @idle, $t;
+        $idleh{$t}++;
         next;
     }
     # less than one percent of the presses
@@ -170,13 +171,22 @@ for my $t (@top) {
 }
 
 my $silent;
+my $daystart=0;
 if($idle[0]) {
     $silent=join(", ", sort @idle);
+    for my $h (4 .. 12) {
+        my $hh = sprintf("%02d", $h);
+        if($idleh{$hh}) {
+            next;
+        }
+        $daystart = $h;
+        last;
+    }
 }
 else {
     $silent = "NONE";
 }
-printf "Inactive hours: %s\n", $silent;
+printf "Inactive hours: %s (day start $daystart)\n", $silent;
 
 my $s;
 if($slow[0]) {
@@ -218,8 +228,8 @@ for my $m (@mintop) {
 print "\nActivity distribution over the day, per hour:\n";
 $i=1;
 my $max = $dayhour{$htop[0]};
-for(00 .. 23) {
-    my $h = sprintf("%02d", $_);
+for my $hh (00 .. 23) {
+    my $h = sprintf("%02d", ($hh+$daystart)%24);
     my $width = ($dayhour{$h}/$max)*75;
 
     printf "%s: ".('#' x $width)."\n", $h;
@@ -274,8 +284,22 @@ for my $h (@top) {
 print "\nKey frequency (times used, symbol, share)\n";
 
 $i=1;
-for my $c (sort { $codes{$b} <=> $codes{$a} } keys %codes) {
-    printf ("  %2d: %8s %d times (%0.1f%%)\n", $i, $keymap{$c}, $codes{$c},
+my @top = sort { $codes{$b} <=> $codes{$a} } keys %codes;
+for my $c (@top) {
+    printf ("%2d: %8s %d times (%0.2f%%)\n", $i, $keymap{$c}, $codes{$c},
             ($codes{$c}*100)/$presses);
     $i++;
 }
+
+
+print "\nKey frequency histogram\n";
+
+$i=1;
+my $max = $codes{$top[0]};
+for my $c (@top) {
+    my $width = ($codes{$c}/$max)*75;
+
+    printf "%02d: ".('#' x $width)."\n", $i;
+    $i++;
+}
+
