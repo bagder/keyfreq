@@ -86,6 +86,13 @@ while(<STDIN>) {
                 }
             }
         }
+
+        if($osecs) {
+            my $gap = $secs - $osecs;
+            if($gap > $bestgap) {
+                $bestgap = $gap;
+            }
+        }
         
         $ocode = $code;
         $osymb = $symb;
@@ -133,7 +140,8 @@ printf "%d keys/active hour (%d%% active hours)\n%d keys/active minute (%d%% act
     $presses/$aminutes, $aminutes*100/$totalminutes;
 
 my @top = sort { $days{$b} <=> $days{$a} } keys %days;
-printf "Most keys during a single day: %d (%s)\n", $days{$top[0]}, $top[0];
+my $mostduringoneday = $days{$top[0]};
+printf "Most keys during a single day: %d (%s)\n", $mostduringoneday, $top[0];
 
 my @top = sort { $hours{$b} <=> $hours{$a} } keys %hours;
 printf "Most keys during a single hour: %d (%s)\n", $hours{$top[0]}, $top[0];
@@ -153,6 +161,7 @@ printf "Most active day of the week: %d keys (%s)\n", $weekday{$wtop[0]},
 
 printf "Longest key sequence without backspace: %d\n", $bestnonbcksp;
 
+printf "Longest contiguous time without keys: %.1f hours\n", $bestgap/3600;
 
 my @top = sort { $dayhour{$a} <=> $dayhour{$b} } keys %dayhour;
 
@@ -182,11 +191,21 @@ if($idle[0]) {
         $daystart = $h;
         last;
     }
+    if($daystart) {
+        my $hh = sprintf("%02d", $daystart);
+        for my $m (00 .. 59) {
+            my $mm = sprintf("%02d", $m);
+            if($dayminute{"$hh:$mm"}) {
+                $daystart = "$hh:$mm";
+                last;
+            }
+        }
+    }
 }
 else {
     $silent = "NONE";
 }
-printf "Inactive hours: %s (day start $daystart)\n", $silent;
+printf "Inactive hours: %s (day starts at $daystart)\n", $silent;
 
 my $s;
 if($slow[0]) {
@@ -303,3 +322,16 @@ for my $c (@top) {
     $i++;
 }
 
+
+print "\nDaily usage histogram (gaps not shown)\n";
+
+my @order = sort keys %days;
+
+$i=1;
+my $max = $mostduringoneday;
+for my $c (@order) {
+    my $width = ($days{$c}/$max)*75;
+
+    printf "%s: ".('#' x $width)."\n", $c;
+    $i++;
+}
